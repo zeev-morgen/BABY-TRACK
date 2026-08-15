@@ -1,0 +1,167 @@
+/* ===== תצוגת הדפסה — היומן המלא כמו החוברת המקורית ===== */
+
+.print-sheet {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.print-page {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px;
+  margin-bottom: 18px;
+}
+
+.print-page__kicker {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.print-page h2 {
+  font-size: 1.5rem;
+  margin: 2px 0 4px;
+}
+
+.print-page h3 {
+  font-size: 1.05rem;
+  margin: 16px 0 4px;
+}
+
+.print-cover {
+  text-align: center;
+  padding: 44px 26px;
+}
+
+.print-cover h1 {
+  font-size: 2.1rem;
+  margin-bottom: 6px;
+}
+
+.print-cover__tagline {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.print-cover img {
+  max-width: 240px;
+  border-radius: var(--radius);
+  margin: 18px auto 0;
+  display: block;
+}
+
+.print-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+  text-align: start;
+}
+
+.print-fact {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+}
+
+.print-fact__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.print-fact__value {
+  font-weight: 700;
+}
+
+.print-block {
+  border-inline-start: 3px solid var(--line-strong);
+  padding-inline-start: 12px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+
+.print-block--empty {
+  color: var(--muted);
+  font-style: italic;
+  border-inline-start-color: var(--line);
+}
+
+.print-list {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+}
+
+.print-photo {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+  border: 1px solid var(--line);
+}
+
+@media print {
+  :root {
+    --paper: #fff;
+    --surface: #fff;
+    --surface-2: #fff;
+    --ink: #000;
+    --ink-soft: #333;
+    --muted: #666;
+    --line: #ccc;
+    --line-strong: #999;
+    --accent: #8a5a2b;
+    --shadow: none;
+    --shadow-sm: none;
+  }
+
+  .app-header,
+  .nav,
+  .print-toolbar,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .main {
+    padding: 0;
+    max-width: none;
+  }
+
+  .print-sheet {
+    max-width: none;
+  }
+
+  .print-page {
+    border: none;
+    border-radius: 0;
+    padding: 0 0 12px;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-page h2,
+  .print-page h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .print-photo,
+  .print-cover img {
+    max-height: 9cm;
+    object-fit: contain;
+  }
+
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+}
