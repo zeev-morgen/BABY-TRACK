@@ -98,6 +98,9 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Safari באייפון מנפח טקסט בסיבוב מסך אם לא עוצרים אותו */
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 h1,
@@ -148,6 +151,8 @@ select {
 
 .app {
   min-height: 100vh;
+  /* dvh מתחשב בסרגלים הנעלמים של Safari באייפון */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -164,7 +169,8 @@ select {
 .app-header__inner {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 10px 16px;
+  padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+  padding-top: max(10px, env(safe-area-inset-top));
   display: flex;
   align-items: center;
   gap: 12px;
@@ -291,7 +297,8 @@ select {
   max-width: var(--max-w);
   width: 100%;
   margin: 0 auto;
-  padding: 22px 16px 80px;
+  padding: 22px max(16px, env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
 }
 
 .page-head {
@@ -1138,6 +1145,92 @@ table.growth td.row-label {
 
 .skip-link:focus {
   inset-inline-start: 8px;
+}
+
+/* ===== מסכי מגע (אייפון בעיקר) ===== */
+
+@media (pointer: coarse) {
+  /* Safari מזייף זום על כל שדה עם טקסט קטן מ-16px — לכן כל השדות בגודל מלא */
+  .input,
+  .textarea,
+  .ability .input--date,
+  .ability .input--text,
+  .milestone__fields .input,
+  table.growth td .input {
+    font-size: 16px;
+  }
+
+  /* יעדי נגיעה נוחים לאצבע */
+  .btn {
+    min-height: 44px;
+  }
+
+  .btn--sm {
+    min-height: 36px;
+  }
+
+  .icon-button,
+  .ability__remove {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav__link {
+    padding: 13px 14px;
+  }
+}
+
+.install-hint {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.install-hint__body {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--peach-ink);
+}
+
+.install-hint__body strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.install-hint__why {
+  margin-top: 6px;
+}
+
+.install-hint__why summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.install-hint__why[open] summary {
+  margin-bottom: 4px;
+}
+
+.install-hint__close {
+  border: none;
+  background: transparent;
+  color: var(--peach-ink);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.install-hint__close:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 @media (max-width: 560px) {

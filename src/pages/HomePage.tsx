@@ -13,6 +13,7 @@ import {
 import { Link } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
 import { ProgressBar } from '../components/fields';
+import { InstallHint } from '../components/InstallHint';
 import { MonthGrid } from './MonthsPage';
 
 export function HomePage() {
@@ -27,6 +28,8 @@ export function HomePage() {
 
   return (
     <div>
+      <InstallHint />
+
       <section className="hero">
         {profile.coverPhoto ? (
           <img className="hero__photo" src={profile.coverPhoto.dataUrl} alt={profile.babyName || 'תמונת התינוק/ת'} />

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { downloadBackup, parseBackup } from '../lib/backup';
+import { parseBackup, saveBackup } from '../lib/backup';
 import { formatBytes } from '../lib/media';
+import { isIOS, isStandalone } from '../lib/platform';
 import { Link, useNavigate } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
 
@@ -14,6 +15,8 @@ export function SettingsPage() {
   const [confirmingReset, setConfirmingReset] = useState(false);
 
   const approximateSize = JSON.stringify(state).length;
+  const onIOS = isIOS();
+  const showIOSWarning = onIOS && !isStandalone();
 
   async function handleImport(file: File | undefined) {
     if (!file) return;
@@ -48,6 +51,13 @@ export function SettingsPage() {
 
       {saveError ? <p className="notice notice--error">⚠️ {saveError}</p> : null}
 
+      {showIOSWarning ? (
+        <p className="notice notice--warn">
+          📲 <strong>לגולשי אייפון:</strong> Safari מנקה אחסון של אתרים שלא נכנסים אליהם כשבוע. הוסיפו את היומן למסך
+          הבית (כפתור השיתוף ⬆️ → "הוספה למסך הבית") — כך הוא נשמר כאפליקציה ולא נמחק.
+        </p>
+      ) : null}
+
       <div className="card">
         <div className="card__head">
           <div className="card__emoji" aria-hidden="true">
@@ -61,9 +71,23 @@ export function SettingsPage() {
         <p className="small muted" style={{ marginBottom: 12 }}>
           גודל משוער של היומן כרגע: {formatBytes(approximateSize)}
         </p>
-        <button type="button" className="btn btn--primary" onClick={() => downloadBackup(state)}>
-          הורדת קובץ גיבוי
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => {
+            void saveBackup(state).then((result) => {
+              if (result === 'shared') setMessage({ tone: 'ok', text: 'הגיבוי נשלח דרך תפריט השיתוף.' });
+              if (result === 'downloaded') setMessage({ tone: 'ok', text: 'קובץ הגיבוי ירד למכשיר.' });
+            });
+          }}
+        >
+          {onIOS ? 'שמירת קובץ גיבוי' : 'הורדת קובץ גיבוי'}
         </button>
+        {onIOS ? (
+          <p className="field__hint" style={{ marginTop: 8 }}>
+            באייפון ייפתח תפריט השיתוף — משם אפשר לשמור ל"קבצים", ל-iCloud Drive או לשלוח לעצמכם בוואטסאפ.
+          </p>
+        ) : null}
       </div>
 
       <div className="card">
