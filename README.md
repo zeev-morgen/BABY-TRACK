@@ -92,8 +92,9 @@ npm run typecheck # בדיקת טיפוסים בלבד
 ## פריסה
 
 הפרויקט נבנה כאתר סטטי לגמרי, ואפשר להעלות את תיקיית `dist/` לכל שירות אחסון סטטי.
-ה-workflow שב-`.github/workflows/deploy.yml` בונה ומפרסם אוטומטית ל-GitHub Pages בכל דחיפה ל-`main`
-(צריך להפעיל פעם אחת: **Settings → Pages → Source: GitHub Actions**).
+ה-workflow שב-`.github/workflows/deploy.yml` בונה ומפרסם אוטומטית ל-GitHub Pages בכל דחיפה ל-`main`, והוא גם מפעיל את
+Pages בעצמו בריצה הראשונה (`enablement: true`). אם ההפעלה נחסמת בהגדרות הארגון, אפשר להפעיל ידנית:
+**Settings → Pages → Source: GitHub Actions**.
 
 הבנייה משתמשת בנתיבים יחסיים (`base: './'`), כך שהאתר עובד גם תחת נתיב של פרויקט ב-GitHub Pages וגם בדומיין משלו.
 

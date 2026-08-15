@@ -29,6 +29,10 @@ jobs:
       - run: npm run build
 
       - uses: actions/configure-pages@v5
+        with:
+          # מפעיל את GitHub Pages בריצה הראשונה, כדי שלא צריך להגדיר ידנית
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
