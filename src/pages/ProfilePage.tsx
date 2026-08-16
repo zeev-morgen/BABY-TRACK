@@ -1,11 +1,12 @@
 import { ageBreakdown, currentJournalMonth, formatLong, todayISO } from '../lib/date';
+import { COPY } from '../lib/copy';
 import { Link } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
 import { TextInput } from '../components/fields';
 import { MediaPicker } from '../components/MediaPicker';
 
 export function ProfilePage() {
-  const { state, setProfile } = useJournal();
+  const { state, setProfile, setCoverPhoto } = useJournal();
   const { profile } = state;
   const age = ageBreakdown(profile.birthDate);
   const current = currentJournalMonth(profile.birthDate);
@@ -94,15 +95,14 @@ export function ProfilePage() {
         <MediaPicker
           kind="image"
           label="בחירת תמונה"
-          hint="נשמרת במכשיר שלכם בלבד"
+          hint={COPY.storageShort}
           value={profile.coverPhoto}
-          onChange={(value) => setProfile({ coverPhoto: value })}
+          onChange={(value) => setCoverPhoto(value)}
         />
       </div>
 
       <p className="notice" style={{ marginTop: 14 }}>
-        🔒 כל מה שנכתב ביומן נשמר רק בדפדפן של המכשיר הזה. אין שרת ואין חשבון — כדי לשמור עותק או לעבור למכשיר אחר,
-        השתמשו ב<Link to="/settings">גיבוי</Link>.
+        🔒 {COPY.profilePrivacy} <Link to="/settings">לייצוא גיבוי</Link>.
       </p>
     </div>
   );

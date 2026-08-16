@@ -1,15 +1,24 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useRoute } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
+import { useSession } from '../store/SessionContext';
 import { ageBreakdown } from '../lib/date';
 
-const NAV = [
+const BASE_NAV = [
   { to: '/', label: 'בית', icon: '🏠' },
   { to: '/months', label: 'חודשים', icon: '📅' },
   { to: '/milestones', label: 'אבני דרך', icon: '⭐' },
   { to: '/growth', label: 'גדילה', icon: '📏' },
   { to: '/timeline', label: 'ציר זמן', icon: '🧵' },
   { to: '/profile', label: 'פרטי התינוק/ת', icon: '👶' },
+];
+
+const CLOUD_NAV = [
+  { to: '/journals', label: 'היומנים שלי', icon: '📚' },
+  { to: '/share', label: 'שיתוף', icon: '🤝' },
+];
+
+const TAIL_NAV = [
   { to: '/guide', label: 'איך משתמשים', icon: '💡' },
   { to: '/settings', label: 'גיבוי והדפסה', icon: '⚙️' },
 ];
@@ -65,9 +74,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const route = useRoute();
   const [theme, toggleTheme] = useTheme();
   const { state } = useJournal();
+  const { mode, user, currentJournal, signOut } = useSession();
 
   const age = ageBreakdown(state.profile.birthDate);
-  const name = state.profile.babyName.trim();
+  const name = state.profile.babyName.trim() || currentJournal?.name.trim() || '';
+  const nav = mode === 'cloud' ? [...BASE_NAV, ...CLOUD_NAV, ...TAIL_NAV] : [...BASE_NAV, ...TAIL_NAV];
 
   return (
     <div className="app">
@@ -98,12 +109,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
+
+            {mode === 'cloud' && user ? (
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => void signOut()}
+                aria-label="התנתקות"
+                title={`מחובר/ת כ־${user.email ?? ''} · התנתקות`}
+              >
+                ⏻
+              </button>
+            ) : null}
           </div>
         </div>
 
         <nav className="nav" aria-label="ניווט ראשי">
           <div className="nav__inner">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

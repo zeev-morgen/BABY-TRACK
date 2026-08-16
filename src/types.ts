@@ -11,12 +11,18 @@ export interface Ability {
   text: string;
 }
 
-/** קובץ מצורף (תמונה או שמע) ששמור כ-data URL. */
+/** קובץ מצורף — תמונה או שמע. */
 export interface Attachment {
+  /**
+   * כתובת להצגה: data URL במצב מקומי, או קישור חתום מ-Supabase Storage בענן.
+   * הקישור החתום פג אחרי כמה שעות ונוצר מחדש בכל טעינה של היומן.
+   */
   dataUrl: string;
   name: string;
   /** גודל משוער בבתים אחרי הדחיסה */
   size: number;
+  /** נתיב הקובץ ב-Storage — קיים רק במצב ענן */
+  path?: string;
 }
 
 /** עמוד חודשי אחד (חודשים 1–12). */

@@ -5,7 +5,8 @@ import type { Attachment } from '../types';
 interface MediaPickerProps {
   kind: 'image' | 'audio';
   value: Attachment | null;
-  onChange: (value: Attachment | null) => void;
+  /** יכול להיות אסינכרוני — בענן הקובץ מועלה לפני שהמצב מתעדכן */
+  onChange: (value: Attachment | null) => void | Promise<void>;
   label: string;
   hint?: string;
 }
@@ -23,7 +24,7 @@ export function MediaPicker({ kind, value, onChange, label, hint }: MediaPickerP
     setError(null);
     try {
       const attachment = kind === 'image' ? await prepareImage(file) : await prepareAudio(file);
-      onChange(attachment);
+      await onChange(attachment);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'לא הצלחנו לצרף את הקובץ');
     } finally {
@@ -57,10 +58,18 @@ export function MediaPicker({ kind, value, onChange, label, hint }: MediaPickerP
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {value.name} · {formatBytes(value.size)}
             </span>
-            <button type="button" className="btn btn--sm" onClick={() => inputRef.current?.click()}>
+            <button type="button" className="btn btn--sm" onClick={() => inputRef.current?.click()} disabled={busy}>
               החלפה
             </button>
-            <button type="button" className="btn btn--sm btn--danger" onClick={() => onChange(null)}>
+            <button
+              type="button"
+              className="btn btn--sm btn--danger"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                Promise.resolve(onChange(null)).finally(() => setBusy(false));
+              }}
+            >
               הסרה
             </button>
           </div>

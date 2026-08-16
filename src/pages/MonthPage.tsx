@@ -3,6 +3,7 @@ import { DOMAINS } from '../data/domains';
 import { monthMeta, MONTHS } from '../data/months';
 import { promptFor } from '../data/prompts';
 import { currentJournalMonth, isValidISO, isWithinMonth, monthWindow, todayISO } from '../lib/date';
+import { COPY } from '../lib/copy';
 import { monthProgress } from '../lib/progress';
 import { Link, useNavigate } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
@@ -169,7 +170,7 @@ export function MonthPage({ month }: { month: number }) {
           </div>
           <div>
             <h2 className="card__title">תמונה והקלטה מהחודש</h2>
-            <p className="card__sub">התמונות נשמרות במכשיר שלכם בלבד ולא נשלחות לשום מקום</p>
+            <p className="card__sub">{COPY.mediaHint}</p>
           </div>
         </div>
         <MediaPicker

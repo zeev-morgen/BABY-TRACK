@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { parseBackup, saveBackup } from '../lib/backup';
 import { formatBytes } from '../lib/media';
 import { isIOS, isStandalone } from '../lib/platform';
+import { COPY, cloud } from '../lib/copy';
 import { Link, useNavigate } from '../lib/router';
 import { useJournal } from '../store/JournalContext';
 
@@ -16,7 +17,8 @@ export function SettingsPage() {
 
   const approximateSize = JSON.stringify(state).length;
   const onIOS = isIOS();
-  const showIOSWarning = onIOS && !isStandalone();
+  // בענן הנתונים שמורים בשרת, ולכן ניקוי האחסון של Safari כבר לא מסכן אותם
+  const showIOSWarning = onIOS && !isStandalone() && !cloud;
 
   async function handleImport(file: File | undefined) {
     if (!file) return;
@@ -37,10 +39,7 @@ export function SettingsPage() {
       <div className="page-head">
         <div className="page-head__eyebrow">גיבוי והדפסה</div>
         <h1>הנתונים שלכם, בשליטה שלכם</h1>
-        <p>
-          היומן נשמר בדפדפן של המכשיר הזה בלבד — אין שרת, אין חשבון ואין העלאה לאינטרנט. לכן כדאי לייצא גיבוי מדי פעם,
-          וגם לפני החלפת מכשיר או ניקוי היסטוריית הדפדפן.
-        </p>
+        <p>{COPY.backupWhy}</p>
       </div>
 
       {message ? (
@@ -148,7 +147,7 @@ export function SettingsPage() {
         {confirmingReset ? (
           <>
             <p className="notice notice--error" style={{ marginBottom: 12 }}>
-              זה ימחק לצמיתות את כל הטקסטים, התמונות וההקלטות מהמכשיר הזה. בטוחים?
+              {COPY.resetWarning}
             </p>
             <div className="btn-row">
               <button
@@ -176,8 +175,7 @@ export function SettingsPage() {
       </div>
 
       <p className="notice" style={{ marginTop: 14 }}>
-        🔒 פרטיות: האפליקציה לא שולחת שום מידע לשרת. הכול נשמר ב-IndexedDB של הדפדפן במכשיר הזה, וניקוי נתוני האתר
-        בדפדפן ימחק גם את היומן — לכן שווה לשמור גיבוי במקום בטוח.
+        {COPY.settingsPrivacy}
       </p>
     </div>
   );
