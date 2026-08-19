@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { changeKey, type Change } from '../lib/repo/types';
 import { isUuid, uuid } from '../lib/id';
+import { normalizeProjectUrl } from '../lib/supabase';
 
 describe('changeKey', () => {
   it('מקבץ הקלדות באותו שדה תחת מפתח אחד', () => {
@@ -61,5 +62,27 @@ describe('uuid', () => {
 
   it('דוחה מזהים מקוצרים מהפורמט הישן', () => {
     expect(isUuid('ability_lz3k_1a2b3c4d')).toBe(false);
+  });
+});
+
+describe('normalizeProjectUrl', () => {
+  it('מסיר לוכסן עודף בסוף — הסיבה ל-"Invalid path specified in request URL"', () => {
+    expect(normalizeProjectUrl('https://abc.supabase.co/')).toBe('https://abc.supabase.co');
+    expect(normalizeProjectUrl('https://abc.supabase.co///')).toBe('https://abc.supabase.co');
+  });
+
+  it('זורק נתיב שהודבק בטעות', () => {
+    expect(normalizeProjectUrl('https://abc.supabase.co/rest/v1')).toBe('https://abc.supabase.co');
+    expect(normalizeProjectUrl('https://abc.supabase.co/auth/v1?apikey=x')).toBe('https://abc.supabase.co');
+  });
+
+  it('משלים סכימה חסרה ומתעלם מרווחים', () => {
+    expect(normalizeProjectUrl('  abc.supabase.co  ')).toBe('https://abc.supabase.co');
+  });
+
+  it('מחזיר undefined לערך ריק או פגום, כך שהאפליקציה נופלת חזרה למצב מקומי', () => {
+    expect(normalizeProjectUrl(undefined)).toBeUndefined();
+    expect(normalizeProjectUrl('')).toBeUndefined();
+    expect(normalizeProjectUrl('   ')).toBeUndefined();
   });
 });
