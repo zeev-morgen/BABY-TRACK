@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { changeKey, type Change } from '../lib/repo/types';
 import { isUuid, uuid } from '../lib/id';
-import { normalizeProjectUrl } from '../lib/supabase';
+import { describeError, extractMessage, normalizeProjectUrl } from '../lib/supabase';
 
 describe('changeKey', () => {
   it('מקבץ הקלדות באותו שדה תחת מפתח אחד', () => {
@@ -84,5 +84,41 @@ describe('normalizeProjectUrl', () => {
     expect(normalizeProjectUrl(undefined)).toBeUndefined();
     expect(normalizeProjectUrl('')).toBeUndefined();
     expect(normalizeProjectUrl('   ')).toBeUndefined();
+  });
+});
+
+describe('extractMessage', () => {
+  it('קורא שגיאה של Supabase שאינה Error — המקרה שהציג [object Object]', () => {
+    const postgrestError = {
+      message: 'new row violates row-level security policy',
+      details: null,
+      hint: null,
+      code: '42501',
+    };
+    expect(extractMessage(postgrestError)).toBe('new row violates row-level security policy');
+    expect(extractMessage(postgrestError)).not.toContain('[object Object]');
+  });
+
+  it('מצרף details ו-hint כשיש', () => {
+    expect(extractMessage({ message: 'נכשל', details: 'שורה 3', hint: 'נסו שוב' })).toBe('נכשל · שורה 3 · נסו שוב');
+  });
+
+  it('נופל לקוד השגיאה כשאין טקסט', () => {
+    expect(extractMessage({ code: 'PGRST116' })).toBe('שגיאה PGRST116');
+  });
+
+  it('מטפל ב-Error רגיל ובמחרוזת', () => {
+    expect(extractMessage(new Error('בום'))).toBe('בום');
+    expect(extractMessage('בום')).toBe('בום');
+  });
+});
+
+describe('describeError', () => {
+  it('מתרגם שגיאת סכימה חסרה להנחיה מעשית', () => {
+    expect(describeError({ code: 'PGRST205', message: 'Could not find the table' })).toContain('0001_init.sql');
+  });
+
+  it('מחזיר את הודעת המקור כשאין תרגום מתאים', () => {
+    expect(describeError({ message: 'משהו מוזר' })).toBe('משהו מוזר');
   });
 });

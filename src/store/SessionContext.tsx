@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { describeError, isCloudConfigured, supabase } from '../lib/supabase';
+import { uuid } from '../lib/id';
 
 export interface JournalSummary {
   id: string;
@@ -166,13 +167,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       createJournal: async (name, birthDate) => {
         if (!supabase || !user) throw new Error('צריך להתחבר');
-        const { data, error } = await supabase
+
+        // המזהה נוצר כאן ולא בשרת בכוונה: אילו היינו מבקשים אותו חזרה עם
+        // .select(), מדיניות הקריאה הייתה נבדקת לפני שה-trigger הספיק לרשום
+        // אותנו כחברים ביומן, והבקשה הייתה חוזרת ריקה.
+        const id = uuid();
+        const { error } = await supabase
           .from('babies')
-          .insert({ name: name.trim(), birth_date: birthDate || null, created_by: user.id })
-          .select('id')
-          .single();
+          .insert({ id, name: name.trim(), birth_date: birthDate || null, created_by: user.id });
         if (error) throw new Error(describeError(error));
-        const id = String((data as { id: string }).id);
         await syncJournals(user);
         setJournalId(id);
         writeSelected(id);

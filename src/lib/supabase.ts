@@ -50,10 +50,35 @@ export function requireSupabase(): SupabaseClient {
   return supabase;
 }
 
+/**
+ * שולף טקסט קריא מכל צורת שגיאה.
+ *
+ * Supabase מחזירה אובייקט רגיל ({message, details, hint, code}) ולא Error,
+ * ולכן String() עליו נותן "[object Object]" ומסתיר את הסיבה האמיתית.
+ */
+export function extractMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const raw = error as Record<string, unknown>;
+    const parts = [raw.message, raw.details, raw.hint].filter(
+      (part): part is string => typeof part === 'string' && part.trim() !== '',
+    );
+    if (parts.length > 0) return parts.join(' · ');
+    if (typeof raw.code === 'string') return `שגיאה ${raw.code}`;
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'משהו השתבש';
+    }
+  }
+  return String(error);
+}
+
 /** הופך שגיאה של Supabase להודעה קריאה בעברית. */
 export function describeError(error: unknown): string {
   if (!error) return 'משהו השתבש';
-  const message = error instanceof Error ? error.message : String(error);
+  const message = extractMessage(error);
 
   const table: [RegExp, string][] = [
     [/Invalid login credentials/i, 'האימייל או הסיסמה לא נכונים'],
@@ -72,10 +97,20 @@ export function describeError(error: unknown): string {
       /Invalid API key|JWSError|invalid claim/i,
       'מפתח ה-anon שהוגדר לאפליקציה אינו תקין. בדקו את VITE_SUPABASE_ANON_KEY',
     ],
+    [
+      /relation .* does not exist|schema cache|PGRST205/i,
+      'הטבלאות עדיין לא קיימות בדאטהבייס. הריצו את supabase/migrations/0001_init.sql ב-SQL Editor',
+    ],
+    [/PGRST116|multiple \(or no\) rows returned/i, 'הרשומה לא נמצאה או שאין הרשאה לקרוא אותה'],
   ];
 
+  // קוד השגיאה של PostgREST/Postgres הוא הסימן האמין ביותר, אבל הוא יושב
+  // בשדה נפרד ולא בטקסט — לכן מחפשים בשניהם.
+  const code = error && typeof error === 'object' ? (error as Record<string, unknown>).code : undefined;
+  const haystack = typeof code === 'string' ? `${message} ${code}` : message;
+
   for (const [pattern, hebrew] of table) {
-    if (pattern.test(message)) return hebrew;
+    if (pattern.test(haystack)) return hebrew;
   }
   return message;
 }
