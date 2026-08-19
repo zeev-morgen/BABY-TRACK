@@ -180,13 +180,23 @@ begin
     raise exception 'אין לך גישה ליומן הזה';
   end if;
 
-  -- 8 תווים, בלי אותיות שקל להתבלבל בהן כשמקריאים בטלפון
-  v_code := translate(upper(substring(encode(gen_random_bytes(8), 'hex') from 1 for 8)), 'O', 'W');
+  -- 8 תווים הקסדצימליים מתוך UUID.
+  -- במכוון לא משתמשים ב-gen_random_bytes של pgcrypto: היא יושבת בסכימת
+  -- extensions ולא נמצאת ב-search_path של הפונקציה הזו. gen_random_uuid
+  -- לעומתה היא פונקציית ליבה של Postgres וזמינה תמיד.
+  for i in 1 .. 5 loop
+    v_code := upper(substring(replace(gen_random_uuid()::text, '-', '') from 1 for 8));
+    begin
+      insert into public.baby_invites (code, baby_id, created_by)
+      values (v_code, p_baby_id, auth.uid());
+      return v_code;
+    exception
+      when unique_violation then
+        null; -- קוד תפוס, מנסים אחד אחר
+    end;
+  end loop;
 
-  insert into public.baby_invites (code, baby_id, created_by)
-  values (v_code, p_baby_id, auth.uid());
-
-  return v_code;
+  raise exception 'לא הצלחנו לייצר קוד הזמנה פנוי, נסו שוב';
 end;
 $$;
 
