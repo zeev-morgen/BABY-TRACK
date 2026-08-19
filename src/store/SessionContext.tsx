@@ -28,6 +28,9 @@ interface SessionContextValue {
   leaveJournal: (id: string) => Promise<void>;
   selectJournal: (id: string) => void;
   refreshJournals: () => Promise<void>;
+  /** השם שההורה השני רואה ברשימת השותפים ליומן */
+  displayName: string;
+  updateDisplayName: (name: string) => Promise<void>;
 }
 
 const SessionCtx = createContext<SessionContextValue | null>(null);
@@ -54,6 +57,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [journals, setJournals] = useState<JournalSummary[]>(isCloudConfigured ? [] : [LOCAL_JOURNAL]);
   const [journalId, setJournalId] = useState<string | null>(isCloudConfigured ? null : LOCAL_JOURNAL.id);
+  const [displayName, setDisplayName] = useState('');
+
+  const loadDisplayName = useCallback(async (activeUser: User | null) => {
+    if (!supabase || !activeUser) {
+      setDisplayName('');
+      return;
+    }
+    const { data } = await supabase.from('profiles').select('display_name').eq('id', activeUser.id).maybeSingle();
+    const stored = (data as { display_name?: string } | null)?.display_name;
+    setDisplayName(stored ?? '');
+  }, []);
 
   const loadJournals = useCallback(async (activeUser: User | null): Promise<JournalSummary[]> => {
     if (!supabase || !activeUser) return [];
@@ -107,7 +121,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (!alive) return;
         const session = data.session as Session | null;
         setUser(session?.user ?? null);
-        if (session?.user) await syncJournals(session.user);
+        if (session?.user) {
+          await syncJournals(session.user);
+          await loadDisplayName(session.user);
+        }
       })
       .catch(() => undefined)
       .finally(() => {
@@ -120,17 +137,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!nextUser) {
         setJournals([]);
         setJournalId(null);
+        setDisplayName('');
         writeSelected(null);
         return;
       }
       void syncJournals(nextUser);
+      void loadDisplayName(nextUser);
     });
 
     return () => {
       alive = false;
       listener.subscription.unsubscribe();
     };
-  }, [syncJournals]);
+  }, [syncJournals, loadDisplayName]);
 
   const value = useMemo<SessionContextValue>(() => {
     const currentJournal = journals.find((item) => item.id === journalId) ?? null;
@@ -208,8 +227,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       refreshJournals: async () => {
         await syncJournals(user);
       },
+
+      displayName,
+
+      updateDisplayName: async (name) => {
+        if (!supabase || !user) throw new Error('צריך להתחבר');
+        const trimmed = name.trim();
+        const { error } = await supabase.from('profiles').update({ display_name: trimmed }).eq('id', user.id);
+        if (error) throw new Error(describeError(error));
+        setDisplayName(trimmed);
+      },
     };
-  }, [ready, user, journals, journalId, syncJournals]);
+  }, [ready, user, journals, journalId, displayName, syncJournals]);
 
   return <SessionCtx.Provider value={value}>{children}</SessionCtx.Provider>;
 }

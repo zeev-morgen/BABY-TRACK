@@ -48,7 +48,9 @@ export function Link({ to, children, ...rest }: LinkProps) {
 
 /** מחזיר את הפרמטר של הנתיב, למשל "/month/3" → 3. */
 export function routeParam(route: string, prefix: string): string | null {
-  if (!route.startsWith(prefix)) return null;
+  // ההתאמה חייבת להסתיים בגבול מקטע: בלי זה "/months" נתפס כקידומת של
+  // "/month" ומתפרש כחודש בשם "s", והעמוד של רשימת החודשים לא נטען לעולם.
+  if (route !== prefix && !route.startsWith(`${prefix}/`)) return null;
   const rest = route.slice(prefix.length).replace(/^\//, '');
   return rest.split('/')[0] || null;
 }

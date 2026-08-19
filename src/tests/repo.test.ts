@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { changeKey, type Change } from '../lib/repo/types';
 import { isUuid, uuid } from '../lib/id';
 import { describeError, extractMessage, normalizeProjectUrl } from '../lib/supabase';
+import { routeParam } from '../lib/router';
 
 describe('changeKey', () => {
   it('מקבץ הקלדות באותו שדה תחת מפתח אחד', () => {
@@ -120,5 +121,26 @@ describe('describeError', () => {
 
   it('מחזיר את הודעת המקור כשאין תרגום מתאים', () => {
     expect(describeError({ message: 'משהו מוזר' })).toBe('משהו מוזר');
+  });
+});
+
+describe('routeParam', () => {
+  it('לא בולע כתובת אחרת שמתחילה באותן אותיות — הבאג ש-/months החזיר 404', () => {
+    expect(routeParam('/months', '/month')).toBeNull();
+    expect(routeParam('/monthly', '/month')).toBeNull();
+  });
+
+  it('שולף את מספר החודש מכתובת אמיתית', () => {
+    expect(routeParam('/month/3', '/month')).toBe('3');
+    expect(routeParam('/month/12', '/month')).toBe('12');
+  });
+
+  it('מתעלם ממקטעים נוספים בנתיב', () => {
+    expect(routeParam('/month/5/extra', '/month')).toBe('5');
+  });
+
+  it('מחזיר null לקידומת בלי ערך ולכתובת אחרת', () => {
+    expect(routeParam('/month', '/month')).toBeNull();
+    expect(routeParam('/growth', '/month')).toBeNull();
   });
 });

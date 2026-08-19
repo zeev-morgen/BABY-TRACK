@@ -16,12 +16,14 @@ interface Member {
 const canUseShareSheet = typeof navigator !== 'undefined' && 'share' in navigator;
 
 export function SharePage() {
-  const { journalId, currentJournal, user } = useSession();
+  const { journalId, currentJournal, user, displayName, updateDisplayName } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [code, setCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameSaved, setNameSaved] = useState(false);
 
   const loadMembers = useCallback(async () => {
     if (!supabase || !journalId) return;
@@ -36,6 +38,10 @@ export function SharePage() {
   useEffect(() => {
     void loadMembers();
   }, [loadMembers]);
+
+  useEffect(() => {
+    setNameDraft(displayName);
+  }, [displayName]);
 
   async function createCode() {
     if (!supabase || !journalId) return;
@@ -116,6 +122,50 @@ export function SharePage() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="card">
+        <div className="card__head">
+          <div className="card__emoji" aria-hidden="true">
+            ✏️
+          </div>
+          <div>
+            <h2 className="card__title">השם שלי</h2>
+            <p className="card__sub">כך אתם מופיעים להורה השני ברשימה למעלה</p>
+          </div>
+        </div>
+        <div className="milestone__fields">
+          <input
+            className="input"
+            type="text"
+            value={nameDraft}
+            placeholder="למשל: אבא"
+            aria-label="השם שלי ביומן"
+            onChange={(event) => {
+              setNameDraft(event.target.value);
+              setNameSaved(false);
+            }}
+          />
+          <button
+            type="button"
+            className="btn btn--primary"
+            disabled={busy || nameDraft.trim() === displayName.trim()}
+            onClick={() => {
+              setBusy(true);
+              setError(null);
+              updateDisplayName(nameDraft)
+                .then(() => {
+                  setNameSaved(true);
+                  return loadMembers();
+                })
+                .catch((err: Error) => setError(err.message))
+                .finally(() => setBusy(false));
+            }}
+          >
+            שמירה
+          </button>
+        </div>
+        {nameSaved ? <p className="field__hint">השם עודכן ✓</p> : null}
       </div>
 
       <div className="card">
