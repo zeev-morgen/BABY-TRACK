@@ -20,6 +20,7 @@ export type Change =
   | { kind: 'ability-upsert'; month: number; ability: Ability }
   | { kind: 'ability-delete'; id: string }
   | { kind: 'milestone'; key: string; patch: Partial<MilestoneEntry> }
+  | { kind: 'milestone-delete'; key: string }
   | { kind: 'growth'; rowId: string; patch: Partial<GrowthEntry> }
   | { kind: 'growth-notes'; value: string }
   | { kind: 'replace-all' };
@@ -43,6 +44,7 @@ export function changeKey(change: Change): string {
     case 'ability-delete':
       return `ability:${change.id}`;
     case 'milestone':
+    case 'milestone-delete':
       return `milestone:${change.key}`;
     case 'growth':
       return `growth:${change.rowId}`;

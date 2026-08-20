@@ -105,6 +105,14 @@ export function normalizeState(raw: unknown): JournalState {
     const item = (milestonesRaw[id] ?? {}) as Record<string, unknown>;
     base.milestones[id] = { date: str(item.date), note: str(item.note) };
   }
+  // אבני דרך שההורים הגדירו בעצמם — כל מפתח שאינו ברשימה הקבועה
+  for (const [key, value] of Object.entries(milestonesRaw)) {
+    if (MILESTONE_IDS.includes(key)) continue;
+    const item = (value ?? {}) as Record<string, unknown>;
+    const label = str(item.label).trim();
+    if (!label) continue;
+    base.milestones[key] = { date: str(item.date), note: str(item.note), label };
+  }
 
   const growthRaw = (input.growth ?? {}) as Record<string, unknown>;
   for (const id of GROWTH_ROW_IDS) {

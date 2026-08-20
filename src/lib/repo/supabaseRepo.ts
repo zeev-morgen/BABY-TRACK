@@ -112,8 +112,14 @@ export const supabaseRepo: JournalRepo = {
     for (const id of MILESTONE_IDS) state.milestones[id] = { date: '', note: '' };
     for (const milestoneRow of (milestones.data ?? []) as Record<string, unknown>[]) {
       const key = String(milestoneRow.key);
-      if (!MILESTONE_IDS.includes(key)) continue;
-      state.milestones[key] = { date: text(milestoneRow.happened_on), note: text(milestoneRow.note) };
+      const label = text(milestoneRow.label).trim();
+      // מפתח שאינו ברשימה הקבועה הוא אבן דרך של ההורים, ובלי כותרת אין מה להציג
+      if (!MILESTONE_IDS.includes(key) && !label) continue;
+      state.milestones[key] = {
+        date: text(milestoneRow.happened_on),
+        note: text(milestoneRow.note),
+        ...(label ? { label } : {}),
+      };
     }
 
     for (const id of GROWTH_ROW_IDS) state.growth[id] = { date: '', weight: '', length: '', head: '', notes: '' };
@@ -221,10 +227,21 @@ export const supabaseRepo: JournalRepo = {
             key: change.key,
             happened_on: dateOrNull(current.date),
             note: current.note,
+            label: current.label ?? '',
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'baby_id,key' },
         );
+        if (error) throw error;
+        return;
+      }
+
+      case 'milestone-delete': {
+        const { error } = await client
+          .from('milestones')
+          .delete()
+          .eq('baby_id', journalId)
+          .eq('key', change.key);
         if (error) throw error;
         return;
       }
@@ -366,11 +383,12 @@ async function writeWholeJournal(journalId: string, state: JournalState): Promis
     if (error) throw error;
   }
 
-  const milestoneRows = MILESTONE_IDS.map((key) => ({
+  const milestoneRows = Object.entries(state.milestones).map(([key, entry]) => ({
     baby_id: journalId,
     key,
-    happened_on: dateOrNull(state.milestones[key]?.date),
-    note: state.milestones[key]?.note ?? '',
+    happened_on: dateOrNull(entry.date),
+    note: entry.note,
+    label: entry.label ?? '',
     updated_at: new Date().toISOString(),
   }));
   const { error: milestoneError } = await client

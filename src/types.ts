@@ -38,6 +38,11 @@ export interface MonthEntry {
 export interface MilestoneEntry {
   date: string;
   note: string;
+  /**
+   * כותרת. ריקה לפריטים הקבועים מהיומן המודפס — שם הכותרת מגיעה מ-data/milestones —
+   * ומלאה לאבני דרך שההורים הגדירו בעצמם.
+   */
+  label?: string;
 }
 
 /** שורה בטבלת מעקב הגדילה. */

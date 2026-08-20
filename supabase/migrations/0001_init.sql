@@ -86,6 +86,9 @@ create table if not exists public.milestones (
   key         text        not null,
   happened_on date,
   note        text        not null default '',
+  -- ריק לפריטים הקבועים מהיומן (הכותרת מגיעה מהקוד), ומלא לאבני דרך
+  -- שההורים הגדירו בעצמם
+  label       text        not null default '',
   updated_at  timestamptz not null default now(),
   primary key (baby_id, key)
 );

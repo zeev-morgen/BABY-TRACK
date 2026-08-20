@@ -39,6 +39,8 @@ interface JournalContextValue {
   removeAbility: (month: number, id: string) => void;
   setMilestone: (id: string, patch: Partial<MilestoneEntry>) => void;
   toggleMilestone: (id: string) => void;
+  addCustomMilestone: (label: string) => string;
+  removeMilestone: (id: string) => void;
   setGrowth: (id: string, patch: Partial<GrowthEntry>) => void;
   setGrowthNotes: (value: string) => void;
   replaceState: (next: JournalState) => void;
@@ -263,6 +265,23 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           milestones: { ...current.milestones, [id]: { ...(current.milestones[id] ?? { date: '', note: '' }), ...patch } },
         }));
         enqueue({ kind: 'milestone', key: id, patch });
+      },
+
+      addCustomMilestone: (label) => {
+        const key = uuid();
+        const entry: MilestoneEntry = { date: todayISO(), note: '', label: label.trim() };
+        mutate((current) => ({ ...current, milestones: { ...current.milestones, [key]: entry } }));
+        enqueue({ kind: 'milestone', key, patch: entry });
+        return key;
+      },
+
+      removeMilestone: (id) => {
+        mutate((current) => {
+          const next = { ...current.milestones };
+          delete next[id];
+          return { ...current, milestones: next };
+        });
+        enqueue({ kind: 'milestone-delete', key: id });
       },
 
       setGrowth: (id, patch) => {

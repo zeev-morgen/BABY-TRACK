@@ -1,6 +1,6 @@
 import { DOMAIN_KEYS } from '../data/domains';
 import { GROWTH_ROWS } from '../data/growth';
-import { MILESTONES } from '../data/milestones';
+import { resolveMilestones } from './milestones';
 import { MONTH_NUMBERS } from '../data/months';
 import type { JournalState, MonthEntry, TimelineItem } from '../types';
 import { formatShort, isValidISO } from './date';
@@ -28,7 +28,12 @@ export function isMonthStarted(entry: MonthEntry | undefined): boolean {
 }
 
 export function milestonesDone(state: JournalState): number {
-  return MILESTONES.filter((m) => isValidISO(state.milestones[m.id]?.date ?? '')).length;
+  return resolveMilestones(state).filter((m) => isValidISO(state.milestones[m.key]?.date ?? '')).length;
+}
+
+/** סך אבני הדרך המוצגות — הקבועות מהיומן ואלה שההורים הוסיפו. */
+export function milestonesTotal(state: JournalState): number {
+  return resolveMilestones(state).length;
 }
 
 export function growthRowsFilled(state: JournalState): number {
@@ -54,7 +59,7 @@ export function photosCount(state: JournalState): number {
 export function overallProgress(state: JournalState): number {
   const monthRatios = MONTH_NUMBERS.map((month) => monthProgress(state.months[String(month)]).ratio);
   const monthsPart = monthRatios.reduce((a, b) => a + b, 0) / MONTH_NUMBERS.length;
-  const milestonesPart = milestonesDone(state) / MILESTONES.length;
+  const milestonesPart = milestonesDone(state) / Math.max(1, milestonesTotal(state));
   const growthPart = growthRowsFilled(state) / GROWTH_ROWS.length;
   return (monthsPart * 0.6 + milestonesPart * 0.25 + growthPart * 0.15) * 100;
 }
@@ -74,15 +79,15 @@ export function buildTimeline(state: JournalState): TimelineItem[] {
     });
   }
 
-  for (const milestone of MILESTONES) {
-    const entry = state.milestones[milestone.id];
+  for (const milestone of resolveMilestones(state)) {
+    const entry = state.milestones[milestone.key];
     if (entry && isValidISO(entry.date)) {
       items.push({
-        id: `milestone-${milestone.id}`,
+        id: `milestone-${milestone.key}`,
         date: entry.date,
         title: `${milestone.emoji} ${milestone.label}`,
         kind: 'milestone',
-        context: entry.note.trim() || 'אבן דרך ראשונה',
+        context: entry.note.trim() || (milestone.custom ? 'אבן דרך משלנו' : 'אבן דרך ראשונה'),
         href: '#/milestones',
       });
     }

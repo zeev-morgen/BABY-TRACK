@@ -1,4 +1,4 @@
-import { MILESTONES } from '../data/milestones';
+
 import { MONTHS, monthMeta } from '../data/months';
 import { ageBreakdown, currentJournalMonth, monthWindow } from '../lib/date';
 import {
@@ -6,6 +6,7 @@ import {
   buildTimeline,
   formatTimelineDate,
   milestonesDone,
+  milestonesTotal,
   monthProgress,
   overallProgress,
   photosCount,
@@ -78,7 +79,7 @@ export function HomePage() {
             <div className="stat__value">
               {milestonesDone(state)}
               <span className="muted" style={{ fontSize: '0.9rem' }}>
-                /{MILESTONES.length}
+                /{milestonesTotal(state)}
               </span>
             </div>
             <div className="stat__label">אבני דרך</div>

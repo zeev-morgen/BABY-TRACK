@@ -1,6 +1,6 @@
 import { DOMAINS } from '../data/domains';
 import { GROWTH_ROWS } from '../data/growth';
-import { MILESTONES } from '../data/milestones';
+import { resolveMilestones } from '../lib/milestones';
 import { MONTHS } from '../data/months';
 import { formatLong, formatShort, monthWindow } from '../lib/date';
 import { monthProgress } from '../lib/progress';
@@ -17,7 +17,7 @@ export function PrintPage() {
   const navigate = useNavigate();
   const { profile } = state;
   const filledMonths = MONTHS.filter((meta) => monthProgress(state.months[String(meta.month)]).done > 0);
-  const achievedMilestones = MILESTONES.filter((milestone) => state.milestones[milestone.id]?.date);
+  const achievedMilestones = resolveMilestones(state).filter((milestone) => state.milestones[milestone.key]?.date);
   const growthRows = GROWTH_ROWS.filter((row) => {
     const entry = state.growth[row.id];
     return entry && (entry.weight || entry.length || entry.head || entry.notes);
@@ -71,9 +71,9 @@ export function PrintPage() {
           <h2>כל "פעם ראשונה" והתאריך שבו קרתה</h2>
           <ul className="print-list">
             {achievedMilestones.map((milestone) => {
-              const entry = state.milestones[milestone.id];
+              const entry = state.milestones[milestone.key];
               return (
-                <li key={milestone.id}>
+                <li key={milestone.key}>
                   <strong>{milestone.label}</strong> — {formatShort(entry.date)}
                   {entry.note.trim() ? ` · ${entry.note.trim()}` : ''}
                 </li>

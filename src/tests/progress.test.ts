@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyState, normalizeState } from '../lib/state';
-import { abilitiesCount, buildTimeline, milestonesDone, monthProgress, overallProgress } from '../lib/progress';
+import {
+  abilitiesCount,
+  buildTimeline,
+  milestonesDone,
+  milestonesTotal,
+  monthProgress,
+  overallProgress,
+} from '../lib/progress';
+import { resolveMilestones } from '../lib/milestones';
+import { MILESTONES } from '../data/milestones';
 import { parseLengthCm, parseNumber, parseWeightKg } from '../lib/measure';
 import { parseBackup, buildBackup } from '../lib/backup';
 
@@ -145,5 +154,57 @@ describe('normalizeState', () => {
   it('לא נופל על קלט זבל', () => {
     expect(normalizeState(null).version).toBe(1);
     expect(normalizeState('טקסט').months['5']).toBeDefined();
+  });
+});
+
+describe('אבני דרך משלנו', () => {
+  function withCustom() {
+    const state = createEmptyState();
+    state.milestones['3f2a1b4c-0000-4000-8000-000000000001'] = {
+      date: '2026-07-04',
+      note: 'בחוף בת ים',
+      label: 'הפעם הראשונה בים',
+    };
+    return state;
+  }
+
+  it('מצטרפות לרשימה אחרי הפריטים הקבועים', () => {
+    const resolved = resolveMilestones(withCustom());
+    expect(resolved).toHaveLength(MILESTONES.length + 1);
+    const last = resolved[resolved.length - 1];
+    expect(last.custom).toBe(true);
+    expect(last.label).toBe('הפעם הראשונה בים');
+    expect(resolved.filter((m) => m.custom)).toHaveLength(1);
+  });
+
+  it('נספרות בהתקדמות ובסך הכול', () => {
+    const state = withCustom();
+    expect(milestonesTotal(state)).toBe(MILESTONES.length + 1);
+    expect(milestonesDone(state)).toBe(1);
+  });
+
+  it('מופיעות בציר הזמן עם התאריך וההערה', () => {
+    const timeline = buildTimeline(withCustom());
+    const item = timeline.find((entry) => entry.title.includes('הפעם הראשונה בים'));
+    expect(item).toBeDefined();
+    expect(item!.date).toBe('2026-07-04');
+    expect(item!.context).toBe('בחוף בת ים');
+  });
+
+  it('שורדות סבב גיבוי-שחזור', () => {
+    const restored = parseBackup(JSON.stringify(buildBackup(withCustom())));
+    const resolved = resolveMilestones(restored);
+    expect(resolved.some((m) => m.custom && m.label === 'הפעם הראשונה בים')).toBe(true);
+  });
+
+  it('רשומה בלי כותרת נזרקת בייבוא, כדי שלא תופיע שורה ריקה', () => {
+    const normalized = normalizeState({ milestones: { 'some-key': { date: '2026-01-01', note: '', label: '  ' } } });
+    expect(resolveMilestones(normalized).filter((m) => m.custom)).toHaveLength(0);
+  });
+
+  it('פריט קבוע נשאר לא-custom', () => {
+    const resolved = resolveMilestones(createEmptyState());
+    expect(resolved.every((m) => !m.custom)).toBe(true);
+    expect(resolved).toHaveLength(MILESTONES.length);
   });
 });
